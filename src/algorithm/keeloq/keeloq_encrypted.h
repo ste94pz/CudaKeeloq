@@ -20,10 +20,8 @@ struct EncParcel
 
     __device__ __host__ EncParcel(uint64_t data) : ota(data)
     {
-        uint64_t key = misc::rev_bits(ota, sizeof(ota) * 8);
-
-        fixed = (uint32_t)(key >> 32);
-        hopping = (uint32_t)(key);
+        fixed = (uint32_t)(ota >> 32);
+        hopping = (uint32_t)(ota);
     }
 
     // Fixed code in parcel
@@ -33,10 +31,10 @@ struct EncParcel
     __device__ __host__ inline uint32_t hop() const { return hopping; }
 
     // first 18 bits of fixed code - serial (can be used in decryption)
-    __device__ __host__ inline uint32_t srl() const { return fixed & 0x3FF; }
+    __device__ __host__ inline uint32_t srl() const { return fixed >> 4; }
 
     // last 4 bits of fixed code - button (can be used in decryption)
-    __device__ __host__ inline uint32_t btn() const { return fixed >> 28; }
+    __device__ __host__ inline uint32_t btn() const { return fixed & 0xF; }
 
 private:
 

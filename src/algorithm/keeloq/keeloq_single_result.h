@@ -28,26 +28,47 @@ struct SingleResult
         __host__ __device__ inline uint32_t operator[](uint32_t index) const
         {
             assert(index < ResultsCount && "Invalid index of decrypted data. Bigger than last element");
-#if __CUDA_ARCH__
-            return __ldca(&data[index]);
-#else
-            return data[index];
-#endif
+            #if __CUDA_ARCH__
+                return __ldca(&data[index]);
+            #else
+                return data[index];
+            #endif
         }
 
         __host__ __device__ inline uint32_t srl(KeeloqLearningType::Type learning) const
         {
-            return ((*this)[learning] >> 16) & 0x3ff;
+            if (learning == KeeloqLearningType::Faac || learning == KeeloqLearningType::Faac_Rev)
+            {
+                return 0;
+            }
+            else
+            {
+                return ((*this)[learning] >> 16) & 0x3ff;
+            }
         }
 
         __host__ __device__ inline uint32_t btn(KeeloqLearningType::Type learning) const
         {
-            return ((*this)[learning] >> 28);
+            if (learning == KeeloqLearningType::Faac || learning == KeeloqLearningType::Faac_Rev)
+            {
+                return 0;
+            }
+            else
+            {
+                return ((*this)[learning] >> 28);
+            }
         }
 
         __host__ __device__ inline uint32_t cnt(KeeloqLearningType::Type learning) const
         {
-            return ((*this)[learning]) & 0x0000FFFF;
+            if (learning == KeeloqLearningType::Faac || learning == KeeloqLearningType::Faac_Rev)
+            {
+                return ((*this)[learning]) & 0xFFFFF;
+            }
+            else
+            {
+                return ((*this)[learning]) & 0x0000FFFF;
+            }
         }
 
         void print(uint8_t element, uint64_t ota, bool ismatch) const;
