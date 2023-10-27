@@ -906,11 +906,11 @@ __host__ EncParcel keeloq::GetOTA(uint64_t key, uint32_t seed, uint32_t serial, 
 
     // GPU
     KernelResult kernel_results;
-    Kenrel_keeloq_single_check<<<1, 1 >>>(encrypted, fwd_dec.man(), fwd_dec.seed(), learning, kernel_results.ptr());
+    Kernel_keeloq_single_check<<<1, 1 >>>(encrypted, fwd_dec.man(), fwd_dec.seed(), learning, kernel_results.ptr());
     kernel_results.read();
     assert(kernel_results.value == unencrypted);
 
-    Kenrel_keeloq_single_check<<<1, 1 >>>(encrypted, rev_dec.man(), rev_dec.seed(), learning + 1, kernel_results.ptr());
+    Kernel_keeloq_single_check<<<1, 1 >>>(encrypted, rev_dec.man(), rev_dec.seed(), learning + 1, kernel_results.ptr());
     kernel_results.read();
     assert(kernel_results.value == unencrypted);
 #endif
