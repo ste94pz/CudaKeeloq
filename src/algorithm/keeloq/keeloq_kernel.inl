@@ -156,6 +156,55 @@ __device__ uint8_t is_srl_match(const Span<SingleResult>& results, KeeloqLearnin
     return lrn_matches == NumInputs && expected_srl != 0; // 0 check at the end to save instructions in loop
 }
 
+template<uint8_t NumInputs>
+__device__ uint8_t is_faac_match(const Span<SingleResult>& results, KeeloqLearningType::Type learning_type)
+{
+    static_assert(NumInputs > 1, "This function is not supposed to be called in single input mode");
+
+    uint8_t counter_maxdiff = NumInputs + 1;
+
+    uint32_t expected_cnt = results[0].decrypted.cnt(learning_type);
+    uint32_t lrn_matches = 1;
+
+    auto extract_top12 = [](uint32_t unenc) -> uint32_t {
+        return (unenc >> 20) & 0xFFF;
+    };
+
+    UNROLL
+    for (uint8_t item = 1; item < NumInputs; ++item)
+    {
+        uint32_t cnt = results[item].decrypted.cnt(learning_type);
+        // counter check (same threshold as is_cnt_match)
+        bool cnt_ok = __usad(expected_cnt, cnt, 0) < counter_maxdiff;
+        if (!cnt_ok)
+            continue;
+
+        uint32_t top_dec = extract_top12(results[item].decrypted.data[learning_type]);
+
+        // Reconstruct expected top12 from EncParcel.fix() (fix = serial<<4 | button for FAAC)
+        uint32_t fix = results[item].encrypted.fix();
+        uint32_t fixx[8];
+        for (int i = 0; i < 8; ++i)
+        {
+            fixx[i] = (fix >> (28 - 4 * i)) & 0xF;
+        }
+
+        uint32_t expected_top;
+        if ((cnt & 1) == 0)
+        {
+            expected_top = (fixx[6] << 8) | (fixx[7] << 4) | fixx[5];
+        }
+        else
+        {
+            expected_top = (fixx[2] << 8) | (fixx[3] << 4) | fixx[4];
+        }
+
+        lrn_matches += (top_dec == expected_top);
+    }
+
+    return lrn_matches == NumInputs;
+}
+
 template<uint8_t NumInputs, bool ForceAllLearningTypes>
 __device__ KeeloqLearningType::Type get_match_learning(const Span<SingleResult>& results, const KeeloqLearningType::Mask& learnings_mask)
 {
@@ -171,7 +220,7 @@ __device__ KeeloqLearningType::Type get_match_learning(const Span<SingleResult>&
             bool has_match = 0;
             if (lrn == KeeloqLearningType::Faac || lrn == KeeloqLearningType::Faac_Rev)
             {
-                has_match = is_cnt_match<NumInputs>(results, lrn);
+                has_match = is_faac_match<NumInputs>(results, lrn);
             }
             else
             {
@@ -228,7 +277,10 @@ __device__ KeeloqLearningType::Type analyze_single_result(const SingleResult& re
         uint32_t srl = result.decrypted.srl(lrn);
         uint32_t btn = result.decrypted.btn(lrn);
 
-        bool has_match = allowed/* && srl == exp_srl && srl != 0 && btn == exp_btn*/;
+        bool has_match = allowed
+            && (lrn == KeeloqLearningType::Faac || lrn == KeeloqLearningType::Faac_Rev
+                ? true
+                : (srl == exp_srl && srl != 0 && btn == exp_btn));
 
         match_count += has_match;
         match_learning_type = (has_match * lrn + !has_match * match_learning_type);

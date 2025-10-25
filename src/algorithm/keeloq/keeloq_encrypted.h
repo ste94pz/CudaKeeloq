@@ -8,8 +8,6 @@
 /**
  *  struct for convenience
  * Represents sent over the air data
- * Since from engineering perspective normal byte (bit) order is big endian
- * In order to get fixed and hopping codes OTA has to be bit-reversed
  */
 struct EncParcel
 {
@@ -30,7 +28,7 @@ struct EncParcel
     // hopping code in parcel
     __device__ __host__ inline uint32_t hop() const { return hopping; }
 
-    // first 18 bits of fixed code - serial (can be used in decryption)
+    // first 28 bits of fixed code - serial (can be used in decryption)
     __device__ __host__ inline uint32_t srl() const { return fixed >> 4; }
 
     // last 4 bits of fixed code - button (can be used in decryption)

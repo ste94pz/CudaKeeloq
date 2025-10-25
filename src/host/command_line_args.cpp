@@ -362,11 +362,22 @@ CommandLineArgs CommandLineArgs::parse(int argc, const char** argv)
             cxxopts::value<std::vector<uint8_t>>(), "[m1,m2..]")
         (ARG_LTYPE,
             "Specific learning type (if you know your target well). Increases approximately x16 times (since doesn't calculate other types)"
-            "\n\tV+1 means with reverse key (There are also more types. see source code):"
             "\n\t0: - Simple"
+            "\n\t1: - Simple with reverse key"
             "\n\t2: - Normal"
+            "\n\t3: - Normal with reverse key"
             "\n\t4: - Secure"
-            "\n\t6: - Xor"
+            "\n\t5: - Secure with reverse key"
+            "\n\t6: - Magic Xor type 1"
+            "\n\t7: - Magic Xor type 1 with reverse key"
+            "\n\t8: - Faac"
+            "\n\t9: - Faac with reverse key"
+            "\n\t10: - Magic Serial type 1"
+            "\n\t11: - Magic Serial type 1 with reverse key"
+            "\n\t12: - Magic Serial type 2"
+            "\n\t13: - Magic Serial type 2 with reverse key"
+            "\n\t14: - Magic Serial type 3"
+            "\n\t15: - Magic Serial type 3 with reverse key"
             "\nALL",
             cxxopts::value<std::vector<uint8_t>>()->default_value(KeeloqLearningType::ValueString(KeeloqLearningType::LAST)), "<type>")
 
