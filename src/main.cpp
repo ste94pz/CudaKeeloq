@@ -140,7 +140,7 @@ void bruteforce(const CommandLineArgs& args)
             auto kernelResults = keeloq::kernels::cuda_brute(kernelInput, attackRound.CudaBlocks(), attackRound.CudaThreads());
             match = attackRound.check_results(kernelResults);
 
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+            auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
                 std::chrono::high_resolution_clock::now() - batchStartTime);
 
             if (batch == 0 || match)
@@ -151,17 +151,19 @@ void bruteforce(const CommandLineArgs& args)
 
             if (!match)
             {
-                auto kilo_result_per_second = duration.count() == 0 ? 0 : keysInBatch / duration.count();
+                const auto duration_ns = duration.count();
+                const double duration_ms = duration_ns / 1000000.0;
+                const double kilo_result_per_second = duration_ns == 0 ? 0.0 : (keysInBatch * 1000000.0) / duration_ns;
                 auto progress_percent = (double)(batch + 1) / batchesInRound;
 
                 console_cursor_ret_up(2);
 
                 const Decryptor& last_used_decryptor = kernelInput.GetConfig().last;
 
-                printf("[%c][%zd/%zd]    %" PRIu64 "(ms)/batch Speed: %" PRIu64 " KKeys/s   Last key:0x%" PRIX64 " (%u)         \n",
+                printf("[%c][%zd/%zd]    %.3f(ms)/batch Speed: %.0f KKeys/s   Last key:0x%" PRIX64 " (%u)         \n",
                     WAIT_CHAR(batch),
                     batch, batchesInRound,
-                    duration.count(),
+                    duration_ms,
                     kilo_result_per_second,
                     last_used_decryptor.man(), last_used_decryptor.seed());
 
